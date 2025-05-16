@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mock API Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    nav {
+      margin-bottom: 20px;
+    }
+    nav button {
+      margin-right: 10px;
+    }
+    section {
+      display: none;
+    }
+    section.active {
+      display: block;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    textarea, input, select {
+      width: 100%;
+      padding: 6px;
+      margin-top: 4px;
+    }
+    .results {
+      margin-top: 20px;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mock API Service</h1>
+
+  <nav>
+    <button onclick="switchTab('create')">Create Mock API</button>
+    <button onclick="switchTab('list')">List Mock APIs</button>
+  </nav>
+
+  <section id="create" class="active">
+    <h2>Create Mock API</h2>
+    <form id="createForm">
+      <label>User ID
+        <input type="text" name="userId" required maxlength="8" />
+      </label>
+      <label>HTTP Method
+        <select name="method">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="DELETE">DELETE</option>
+        </select>
+      </label>
+      <label>API Path (e.g. /api/test)
+        <input type="text" name="path" required />
+      </label>
+      <label>Query Parameters (JSON)
+        <textarea name="queryParams">{}</textarea>
+      </label>
+      <label>Response Body (JSON)
+        <textarea name="responseBody" required>{"message": "This is a mock response"}</textarea>
+      </label>
+      <button type="submit">Create</button>
+    </form>
+    <div class="results" id="createResult"></div>
+  </section>
+
+  <section id="list">
+    <h2>List Mock APIs by User</h2>
+    <form id="listForm">
+      <label>User ID
+        <input type="text" name="userId" required maxlength="8" />
+      </label>
+      <button type="submit">Get Mock APIs</button>
+    </form>
+    <div class="results" id="listResult"></div>
+  </section>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll("section").forEach(section => {
+        section.classList.remove("active");
+      });
+      document.getElementById(tabId).classList.add("active");
+    }
+
+    document.getElementById("createForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const form = e.target;
+      const payload = {
+        userId: form.userId.value.trim(),
+        method: form.method.value,
+        path: form.path.value.trim(),
+        queryParams: JSON.parse(form.queryParams.value || '{}'),
+        responseBody: JSON.parse(form.responseBody.value)
+      };
+
+      try {
+        const res = await fetch('/mock', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        document.getElementById("createResult").innerText = JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById("createResult").innerText = `Error: ${err.message}`;
+      }
+    });
+
+    document.getElementById("listForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const userId = e.target.userId.value.trim();
+      try {
+        const res = await fetch(`/mock/user/${userId}`);
+        const data = await res.json();
+        document.getElementById("listResult").innerText = JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById("listResult").innerText = `Error: ${err.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
